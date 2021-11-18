@@ -267,14 +267,16 @@ class ZipStream(ZipBase):
             for chunk in src:
                 yield chunk
             return
-        if src_type == 'f':
+        elif src_type == 'f':
             with open(src, "rb") as fh:
                 while True:
                     part = fh.read(self.chunksize)
                     if not part:
                         break
                     yield part
-            return
+        elif src_type == 'p':
+            yield src
+        return
 
     def _stream_single_file(self, file_struct):
         """
