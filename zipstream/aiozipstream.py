@@ -62,7 +62,9 @@ class AioZipStream(ZipBase):
                     if not part:
                         break
                     yield part
-            return
+        if src_type == 'p':
+            yield src
+        return
 
     async def _stream_single_file(self, file_struct):
         """
