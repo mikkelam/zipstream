@@ -115,7 +115,7 @@ class ZipBase:
             file_struct['src'] = data['stream']
             file_struct['stype'] = 's'
         elif 'passthrough' in data:
-            file_struct['src'] = data['stream']
+            file_struct['src'] = data['passthrough']
             file_struct['stype'] = 'p'
         else:
             raise Exception('No file or stream in sources')
