@@ -116,6 +116,7 @@ class AioZipStream(ZipBase):
         stream files from _source_of_files if it is an async generator
         """
         async for source in self._source_of_files:
+            source = await source
             async for chunck in self._stream_file_and_local_headers(source):
                 yield chunck
 
