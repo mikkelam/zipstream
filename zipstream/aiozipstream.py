@@ -4,6 +4,7 @@
 # https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 #
 import asyncio
+from typing import AsyncGenerator
 from .zipstream import ZipBase, Processor
 from concurrent import futures
 try:
@@ -80,10 +81,10 @@ class AioZipStream(ZipBase):
             yield chunk
         yield self._make_data_descriptor(file_struct, *pcs.state())
 
-    async def stream(self):
+    async def stream(self, source):
         # stream files from iterabel or async generator
-        if  hasattr(self._source_of_files, "__anext__"):
-            async for chunck in  self._stream_async_gen_fileslist():
+        if  hasattr(source, "__anext__"):
+            async for chunck in  self._stream_async_gen_fileslist(source):
                 yield chunck
             return
         else:
@@ -113,12 +114,12 @@ class AioZipStream(ZipBase):
             self._offset_add(len(chunk))
             yield chunk
 
-    async def _stream_async_gen_fileslist(self):
+    async def _stream_async_gen_fileslist(self, source):
         """
         stream files from _source_of_files if it is an async generator
         """
-        async for source in self._source_of_files:
-            async for chunck in self._stream_file_and_local_headers(source):
+        async for src in source:
+            async for chunck in self._stream_file_and_local_headers(src):
                 yield chunck
 
         for chunk in self._make_end_structures():
