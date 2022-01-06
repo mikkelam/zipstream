@@ -285,6 +285,7 @@ class ZipStream(ZipBase):
         yield self._make_local_file_header(file_struct)
         pcs = Processor(file_struct)
         for chunk in self.data_generator(file_struct['src'], file_struct['stype']):
+            del file_struct['src']  # free memory
             chunk = pcs.process(chunk)
             if len(chunk) > 0:
                 yield chunk

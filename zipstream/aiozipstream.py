@@ -4,6 +4,7 @@
 # https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 #
 import asyncio
+from typing import AsyncGenerator
 from .zipstream import ZipBase, Processor
 from concurrent import futures
 try:
@@ -47,7 +48,7 @@ class AioZipStream(ZipBase):
 
     async def data_generator(self, src, src_type):
         if src_type == 's':
-            if hasattr(src,"__anext__",):
+            if hasattr(src, "__anext__",):
                 async for chunk in src:
                     yield chunk
                 return
@@ -73,6 +74,7 @@ class AioZipStream(ZipBase):
         yield self._make_local_file_header(file_struct)
         pcs = Processor(file_struct)
         async for chunk in self.data_generator(file_struct['src'], file_struct['stype']):
+            del file_struct['src']  # free memory
             yield await self._execute_aio_task(pcs.process, chunk)
         chunk = await self._execute_aio_task(pcs.tail)
         # chunk = await pcs.aio_tail()
@@ -80,10 +82,10 @@ class AioZipStream(ZipBase):
             yield chunk
         yield self._make_data_descriptor(file_struct, *pcs.state())
 
-    async def stream(self):
+    async def stream(self, source):
         # stream files from iterabel or async generator
-        if  hasattr(self._source_of_files, "__anext__"):
-            async for chunck in  self._stream_async_gen_fileslist():
+        if hasattr(source, "__anext__"):
+            async for chunck in self._stream_async_gen_fileslist(source):
                 yield chunck
             return
         else:
@@ -113,12 +115,12 @@ class AioZipStream(ZipBase):
             self._offset_add(len(chunk))
             yield chunk
 
-    async def _stream_async_gen_fileslist(self):
+    async def _stream_async_gen_fileslist(self, source):
         """
         stream files from _source_of_files if it is an async generator
         """
-        async for source in self._source_of_files:
-            async for chunck in self._stream_file_and_local_headers(source):
+        async for src in source:
+            async for chunck in self._stream_file_and_local_headers(src):
                 yield chunck
 
         for chunk in self._make_end_structures():
