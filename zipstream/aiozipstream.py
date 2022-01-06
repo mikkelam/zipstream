@@ -48,7 +48,7 @@ class AioZipStream(ZipBase):
 
     async def data_generator(self, src, src_type):
         if src_type == 's':
-            if hasattr(src,"__anext__",):
+            if hasattr(src, "__anext__",):
                 async for chunk in src:
                     yield chunk
                 return
@@ -74,6 +74,7 @@ class AioZipStream(ZipBase):
         yield self._make_local_file_header(file_struct)
         pcs = Processor(file_struct)
         async for chunk in self.data_generator(file_struct['src'], file_struct['stype']):
+            del file_struct['src']  # free memory
             yield await self._execute_aio_task(pcs.process, chunk)
         chunk = await self._execute_aio_task(pcs.tail)
         # chunk = await pcs.aio_tail()
@@ -83,8 +84,8 @@ class AioZipStream(ZipBase):
 
     async def stream(self, source):
         # stream files from iterabel or async generator
-        if  hasattr(source, "__anext__"):
-            async for chunck in  self._stream_async_gen_fileslist(source):
+        if hasattr(source, "__anext__"):
+            async for chunck in self._stream_async_gen_fileslist(source):
                 yield chunck
             return
         else:
